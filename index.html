@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-cyberDark text-zinc-100 selection:bg-techTeal/30 selection:text-techTeal">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo-Invest AI | Location Intelligence Specialist</title>
+    
+    <!-- Typography Stack -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        display: ['Space Grotesk', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        cyberDark: '#09090b',
+                        cyberPanel: '#18181b',
+                        techTeal: '#14b8a6',
+                        techEmerald: '#10b981',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Leaflet.js Mapping CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        /* Custom Premium Aesthetics & Glassmorphism */
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #09090b;
+            overflow: hidden;
+        }
+
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            background-color: rgba(24, 24, 27, 0.45);
+            border: 1px solid rgba(63, 63, 70, 0.4);
+        }
+
+        .glass-panel-active {
+            backdrop-filter: blur(12px);
+            background-color: rgba(24, 24, 27, 0.7);
+            border: 1px solid rgba(20, 184, 166, 0.45);
+            box-shadow: 0 0 25px rgba(20, 184, 166, 0.08);
+        }
+
+        /* Tech Glowing Tracks */
+        .neon-glow-teal {
+            box-shadow: 0 0 20px rgba(20, 184, 166, 0.15);
+        }
+
+        .neon-glow-emerald {
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.2);
+        }
+
+        .neon-text-teal {
+            text-shadow: 0 0 10px rgba(20, 184, 166, 0.4);
+        }
+
+        /* Sleek Modern Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #09090b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #14b8a6;
+        }
+
+        /* Custom Slider Tracks */
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #14b8a6;
+            cursor: pointer;
+            box-shadow: 0 0 10px #14b8a6;
+            transition: transform 0.1s ease, background-color 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+            background: #10b981;
+            box-shadow: 0 0 15px #10b981;
+        }
+
+        /* Leaflet Popups Custom Cyber Styling */
+        .leaflet-popup-content-wrapper {
+            background: rgba(15, 15, 18, 0.95) !important;
+            color: #f4f4f5 !important;
+            border: 1px solid rgba(20, 184, 166, 0.4) !important;
+            border-radius: 8px !important;
+            backdrop-filter: blur(8px) !important;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(15, 15, 18, 0.95) !important;
+            border-left: 1px solid rgba(20, 184, 166, 0.4) !important;
+            border-bottom: 1px solid rgba(20, 184, 166, 0.4) !important;
+        }
+
+        .leaflet-container {
+            background: #09090b !important;
+        }
+        
+        /* Shimmer Loading Animation */
+        .shimmer-bg {
+            background: linear-gradient(90deg, #18181b 25%, #27272a 50%, #18181b 75%);
+            background-size: 200% 100%;
+            animation: loading-shimmer 1.8s infinite linear;
+        }
+
+        @keyframes loading-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Pulsing Dot Map Markers */
+        .pulsing-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pulsing-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #14b8a6;
+            box-shadow: 0 0 10px #14b8a6;
+            position: relative;
+        }
+        .pulsing-ring {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border: 2px solid #14b8a6;
+            border-radius: 50%;
+            animation: marker-pulse 1.8s ease-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes marker-pulse {
+            0% {
+                transform: scale(0.3);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1.6);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col font-sans antialiased text-zinc-100 selection:bg-techTeal/30 selection:text-techTeal">
+
+    <!-- Top Dashboard Header Navigation -->
+    <header class="w-full flex-shrink-0 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur-md px-6 py-4 flex items-center justify-between z-10">
+        <div class="flex items-center gap-3">
+            <div class="h-10 w-10 rounded-lg bg-gradient-to-tr from-techTeal to-techEmerald flex items-center justify-center shadow-lg shadow-techTeal/10">
+                <i data-lucide="layers" class="h-5 w-5 text-zinc-950 stroke-[2.5]"></i>
+            </div>
+            <div>
+                <h1 class="font-display text-2xl font-bold tracking-tight bg-gradient-to-r from-zinc-50 via-zinc-200 to-techTeal bg-clip-text text-transparent">
+                    Geo-Invest AI
+                </h1>
+                <p class="text-sm text-zinc-500 font-medium">Enterprise Location Intelligence Specialist</p>
+            </div>
+        </div>
+        
+        <!-- Live System Connection Status Tag -->
+        <div class="flex items-center gap-6 text-sm">
+            <div class="hidden sm:flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-zinc-900/60 border border-zinc-800 text-sm text-zinc-400">
+                <span class="font-mono text-techTeal">ENG_V2.0_READY</span>
+            </div>
+            <div class="flex items-center gap-2.5 bg-techTeal/10 border border-techTeal/20 text-techTeal text-sm px-3.5 py-1.5 rounded-full font-medium">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-techTeal opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-techTeal"></span>
+                </span>
+                Engine Online
+            </div>
+        </div>
+    </header>
+
+    <!-- Core Interactive Workspace Matrix -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- 1. LEFT SIDEBAR PANEL: Franchise Strategy Filters -->
+        <aside class="w-full md:w-96 flex-shrink-0 border-r border-zinc-900 bg-zinc-950/40 backdrop-blur-lg p-6 flex flex-col gap-6 overflow-y-auto z-10 shadow-2xl">
+            <div>
+                <h2 class="font-display text-xl font-bold text-zinc-50 flex items-center gap-2.5">
+                    <i data-lucide="sliders-horizontal" class="h-5 w-5 text-techTeal"></i>
+                    Franchise Strategy Filters
+                </h2>
+                <p class="text-sm text-zinc-500 mt-1.5 leading-relaxed">Configure layout constraints for the neuro-metaheuristic RAG planner</p>
+            </div>
+            
+            <hr class="border-zinc-800/80">
+            
+            <!-- Filters Form Block -->
+            <form id="strategyForm" class="flex flex-col gap-5" onsubmit="event.preventDefault();">
+                <!-- Input: Gemini API Key -->
+                <div class="flex flex-col gap-2.5">
+                    <div class="flex justify-between items-center">
+                        <label for="geminiApiKey" class="text-sm font-semibold tracking-wider text-zinc-400 uppercase">
+                            🔑 Gemini API Key
+                        </label>
+                        <a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank" class="text-xs text-techTeal hover:underline">Get Key</a>
+                    </div>
+                    <div class="relative">
+                        <input id="geminiApiKey" type="password" placeholder="Paste your API key here" class="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg py-3 px-4 text-base text-zinc-200 outline-none focus:border-techTeal focus:ring-1 focus:ring-techTeal/30 transition-all font-mono">
+                    </div>
+                </div>
+
+                <!-- Checkbox: No Business Idea Toggle -->
+                <div class="flex items-center gap-3 bg-zinc-900/40 border border-zinc-800/80 rounded-lg p-3 hover:border-zinc-700/50 transition-colors">
+                    <input id="noBusinessIdea" type="checkbox" onchange="toggleBusinessInput(this.checked)" class="w-4 h-4 rounded text-techTeal bg-zinc-900 border-zinc-800 focus:ring-techTeal focus:ring-1 cursor-pointer">
+                    <label for="noBusinessIdea" class="text-sm font-medium text-zinc-300 cursor-pointer select-none">
+                        🤷 I don't have a business idea
+                    </label>
+                </div>
+
+                <!-- Text Area: Prompt Input -->
+                <div class="flex flex-col gap-2.5">
+                    <label id="promptLabel" for="userPrompt" class="text-sm font-semibold tracking-wider text-zinc-400 uppercase">
+                        💡 Business & Location Prompt
+                    </label>
+                    <textarea id="userPrompt" rows="4" placeholder="e.g., I want to start a premium bakery in Indiranagar, Bangalore" class="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg py-3 px-4 text-base text-zinc-200 outline-none focus:border-techTeal focus:ring-1 focus:ring-techTeal/30 transition-all resize-none leading-relaxed"></textarea>
+                </div>
+
+                <div class="mt-4">
+                    <button type="button" id="submitBtn" onclick="runPortfolioOptimizer()" class="relative w-full group overflow-hidden py-4 px-6 rounded-lg bg-gradient-to-r from-techTeal to-techEmerald text-zinc-950 font-display text-base font-bold tracking-wide hover:opacity-95 hover:shadow-lg hover:shadow-techTeal/20 transition-all duration-300 cursor-pointer flex items-center justify-center gap-2">
+                        <span id="btnText" class="flex items-center justify-center gap-2">
+                            <i data-lucide="cpu" class="h-5 w-5"></i>
+                            Evolve Investment Strategy
+                        </span>
+                        <!-- Shimmer Effect Layer -->
+                        <span class="absolute inset-0 w-full h-full bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out"></span>
+                    </button>
+                </div>
+            </form>
+            
+            <div class="mt-auto p-4 rounded-lg bg-zinc-950/80 border border-zinc-900/60 flex items-start gap-3">
+                <i data-lucide="info" class="h-5 w-5 text-techTeal flex-shrink-0 mt-0.5"></i>
+                <p class="text-xs text-zinc-500 leading-relaxed">
+                    Executing this script runs a dynamic Pydantic AI agent connected to Gemini, executing deep demographic and structured financial scans over the requested region.
+                </p>
+            </div>
+        </aside>
+
+        <!-- 2. MAIN WORKSPACE PANEL: Deep Analytics Dashboard -->
+        <section class="flex-1 flex flex-col overflow-hidden relative">
+
+            <!-- ================= STATE 1: INITIAL EMPTY PANEL ================= -->
+            <div id="initialState" class="absolute inset-0 flex flex-col items-center justify-center p-8 z-20 transition-all duration-500">
+                <div class="max-w-md w-full glass-panel border-dashed border-2 border-zinc-800 p-8 rounded-xl text-center flex flex-col items-center gap-4">
+                    <div class="h-16 w-16 rounded-full bg-techTeal/5 border border-techTeal/10 flex items-center justify-center animate-pulse-slow">
+                        <i data-lucide="radar" class="h-8 w-8 text-techTeal"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-display font-bold text-lg text-zinc-200">Awaiting Pipeline Activation</h3>
+                        <p class="text-sm text-zinc-500 mt-2 leading-relaxed">
+                            Configure your structural constraints on the left menu sidebar interface, then click <span class="text-techTeal font-medium">'Evolve Investment Strategy'</span> to run the end-to-end evolutionary framework.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= STATE 2: LOADING SKELETON LAYER ================= -->
+            <div id="loadingState" class="absolute inset-0 bg-cyberDark/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center gap-6 hidden transition-all duration-300">
+                <!-- Holographic Radar Spinner -->
+                <div class="relative h-24 w-24">
+                    <div class="absolute inset-0 rounded-full border-4 border-techTeal/10"></div>
+                    <div class="absolute inset-0 rounded-full border-4 border-t-techTeal border-r-transparent border-b-transparent border-l-transparent animate-spin"></div>
+                    <div class="absolute inset-2 rounded-full border-4 border-techEmerald/10"></div>
+                    <div class="absolute inset-2 rounded-full border-4 border-b-techEmerald border-t-transparent border-r-transparent border-l-transparent animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <i data-lucide="cpu" class="h-6 w-6 text-techTeal animate-pulse"></i>
+                    </div>
+                </div>
+                <div class="text-center flex flex-col gap-3 max-w-sm">
+                    <h3 class="font-display font-bold text-zinc-200 tracking-wide text-base">Running Pipeline Iterations...</h3>
+                    
+                    <!-- Dynamic Loading Log Messages -->
+                    <div class="h-12 overflow-hidden text-xs font-mono text-zinc-500">
+                        <div id="loadingStatusText" class="flex flex-col gap-1.5 text-techTeal">
+                            <div>[GA-Opt] Initializing population of 20 chromosomes...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Skeleton Loader Sparklines -->
+                    <div class="w-64 bg-zinc-900 h-1.5 rounded-full overflow-hidden mt-2">
+                        <div id="progressBar" class="bg-gradient-to-r from-techTeal to-techEmerald h-full w-[25%] transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= STATE 3: FULL ACTIVE WORKSPACE PANEL ================= -->
+            <div id="activeDashboard" class="flex-1 flex flex-col overflow-hidden opacity-0 pointer-events-none transition-all duration-500">
+                
+                <!-- A. TOP METRICS ROW -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 px-6 pt-6 flex-shrink-0">
+                    <!-- Metric Card 1: Total CapEx -->
+                    <div class="glass-panel rounded-xl p-5 relative overflow-hidden group hover:border-zinc-700/80 transition-colors flex flex-col justify-between">
+                        <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-techTeal to-transparent"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Planned Allocation CapEx</p>
+                                <h3 id="metricCapEx" class="font-display font-bold text-3xl text-zinc-100 mt-2 font-mono tracking-tight text-techTeal neon-text-teal">
+                                    ₹ 0.00
+                                </h3>
+                            </div>
+                            <div class="h-9 w-9 rounded-lg bg-techTeal/5 border border-techTeal/15 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="indian-rupee" class="h-4.5 w-4.5 text-techTeal"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mt-3 flex items-center gap-1.5 text-xs text-zinc-400 border-b border-zinc-800/60 pb-2 mb-2">
+                                <i data-lucide="check-circle" class="h-3.5 w-3.5 text-techEmerald"></i>
+                                <span>Constraints satisfied under threshold</span>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Usecase & Purpose</span>
+                                <p class="text-[11px] text-zinc-400 leading-normal font-sans">
+                                    Total estimated setup costs and capital investments required to lease, construct, and launch all recommended store nodes.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metric Card 2: Strategy Title -->
+                    <div class="glass-panel rounded-xl p-5 relative overflow-hidden group hover:border-zinc-700/80 transition-colors flex flex-col justify-between">
+                        <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-techEmerald to-transparent"></div>
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1 min-w-0 pr-2">
+                                <div class="flex items-center gap-1.5">
+                                    <p class="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Evolved Business Strategy</p>
+                                    <span class="cursor-help text-zinc-500 hover:text-zinc-300 transition-colors" title="The tailored strategy framework generated dynamically by AI for the selected business location.">
+                                        <i data-lucide="info" class="h-3.5 w-3.5"></i>
+                                    </span>
+                                </div>
+                                <h3 id="metricTitle" class="font-display font-bold text-sm text-zinc-100 mt-2.5 break-words max-w-[340px]" title="Feasibility Map Plan">
+                                    Evolved Plan
+                                </h3>
+                            </div>
+                            <div class="h-9 w-9 rounded-lg bg-techEmerald/5 border border-techEmerald/15 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="file-json" class="h-4.5 w-4.5 text-techEmerald"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mt-3 flex items-center gap-1.5 text-xs text-zinc-400 border-b border-zinc-800/60 pb-2 mb-2">
+                                <i data-lucide="database" class="h-3.5 w-3.5 text-techTeal"></i>
+                                <span>Generative RAG & Feasibility Scan</span>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Usecase & Purpose</span>
+                                <p class="text-[11px] text-zinc-400 leading-normal font-sans">
+                                    Identifies target business suitability based on local commercial demand, transit accessibility, and spatial competition dynamics.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Metric Card 3: Sector Quadrant -->
+                    <div class="glass-panel rounded-xl p-5 relative overflow-hidden group hover:border-zinc-700/80 transition-colors flex flex-col justify-between">
+                        <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-zinc-700 to-transparent"></div>
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-sm font-semibold text-zinc-500 uppercase tracking-wider">Analysis Status & Region</p>
+                                <h3 id="metricQuadrant" class="font-display font-bold text-xl text-zinc-200 mt-2">
+                                    Quadrant
+                                </h3>
+                            </div>
+                            <div class="h-9 w-9 rounded-lg bg-zinc-800/40 border border-zinc-700/60 flex items-center justify-center flex-shrink-0">
+                                <i data-lucide="map-pin" class="h-4.5 w-4.5 text-zinc-400"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mt-3 flex items-center gap-1.5 text-xs text-zinc-400 border-b border-zinc-800/60 pb-2 mb-2">
+                                <span class="relative flex h-1.5 w-1.5">
+                                    <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-techEmerald"></span>
+                                </span>
+                                <span>Geospatially mapped and verified</span>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Usecase & Purpose</span>
+                                <p class="text-[11px] text-zinc-400 leading-normal font-sans">
+                                    Real-time status of spatial feasibility and coordinate mappings within the target region bounds of India.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- B. LOWER EXECUTION SPLIT FRAME -->
+                <div class="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6 p-6 overflow-hidden">
+                    
+                    <!-- B1. LEFT SEGMENT: WEBGL MAP CANVAS PLACEHOLDER (60% / 3 Cols) -->
+                    <div class="lg:col-span-3 flex flex-col glass-panel rounded-xl overflow-hidden relative">
+                        <div class="px-5 py-3 border-b border-zinc-800/80 bg-zinc-950/40 flex items-center justify-between flex-shrink-0">
+                            <div class="flex items-center gap-2.5">
+                                <i data-lucide="map" class="h-5 w-5 text-techTeal"></i>
+                                <span class="text-sm font-bold uppercase tracking-wider text-zinc-400">Geographic Layout Engine</span>
+                            </div>
+                            <span class="font-mono text-xs text-zinc-500 flex items-center gap-1.5">
+                                <span class="h-1.5 w-1.5 rounded-full bg-techTeal animate-pulse"></span>
+                                MAPBOX_DARK_VIEWPORT
+                            </span>
+                        </div>
+                        
+                        <!-- Leaflet Map Container -->
+                        <div id="mapContainer" class="flex-1 w-full relative z-0"></div>
+                        
+                        <!-- Floating Monospace Coordinates Panel -->
+                        <div class="absolute bottom-4 left-4 z-[400] glass-panel-active rounded-lg px-4.5 py-3.5 max-w-xs flex flex-col gap-2 shadow-2xl">
+                            <span class="text-xs font-bold tracking-wider text-techTeal uppercase">Active Coordinate Anchors</span>
+                            <div id="floatingCoords" class="flex flex-col gap-1.5 font-mono text-xs text-zinc-300">
+                                <div>Awaiting layout coordinates...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- B2. RIGHT SEGMENT: SCROLLABLE SITE RECOMMENDATIONS (40% / 2 Cols) -->
+                    <div class="lg:col-span-2 flex flex-col overflow-hidden glass-panel rounded-xl">
+                        <div class="px-5 py-3 border-b border-zinc-800/80 bg-zinc-950/40 flex items-center justify-between flex-shrink-0">
+                            <div class="flex items-center gap-2.5">
+                                <i data-lucide="list-ordered" class="h-5 w-5 text-techEmerald"></i>
+                                <span class="text-sm font-bold uppercase tracking-wider text-zinc-400">Evolved Site Alternatives</span>
+                            </div>
+                            <span id="storeCountTag" class="text-xs bg-zinc-800 text-zinc-400 px-2.5 py-1 rounded-full font-mono font-bold">
+                                0 Nodes
+                            </span>
+                        </div>
+                        
+                        <!-- Site Recommendation Scroll Container -->
+                        <div id="siteCardsContainer" class="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+                            <!-- Recommendations will be injected dynamically here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- C. FOOTER: VERIFIABLE JSON SCHEMA CONTRACT RESPONSIVE BOX -->
+                <div class="px-6 pb-6 flex-shrink-0">
+                    <div class="glass-panel rounded-xl overflow-hidden">
+                        <button onclick="toggleJsonPanel()" class="w-full px-5 py-3 border-b border-zinc-800/80 bg-zinc-950/40 flex items-center justify-between text-left outline-none cursor-pointer">
+                            <div class="flex items-center gap-2.5">
+                                <i data-lucide="terminal" class="h-5 w-5 text-techTeal"></i>
+                                <span class="text-sm font-bold uppercase tracking-wider text-zinc-400">Verifiable Schema Contract JSON Response Frame</span>
+                            </div>
+                            <i id="jsonCaret" data-lucide="chevron-right" class="h-4.5 w-4.5 text-zinc-500 transition-transform duration-300"></i>
+                        </button>
+                        <div id="jsonBody" class="h-0 overflow-hidden transition-all duration-300 bg-zinc-950/90 font-mono text-xs text-zinc-400 leading-relaxed">
+                            <pre id="jsonOutput" class="p-5 max-h-56 overflow-auto">Awaiting schema validation payload...</pre>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+        </section>
+    </main>
+
+    <!-- Leaflet.js Mapping Library -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Lucide Icon Pack -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        // Global UI and Map State Controllers
+        let leafletMap = null;
+        let mapMarkers = [];
+        let polylineConnector = null;
+
+        // Initialize Lucide Icons
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            initMap();
+            
+            // Retrieve saved API Key
+            const savedKey = localStorage.getItem('geoInvestGeminiKey');
+            if (savedKey) {
+                document.getElementById('geminiApiKey').value = savedKey;
+            }
+        });
+
+        // Initialize Dark Matter Leaflet Map Canvas
+        function initMap() {
+            // Bangalore Core Coordinates Default Anchor
+            const baseLat = 12.97159;
+            const baseLon = 77.59456;
+            
+            leafletMap = L.map('mapContainer', {
+                zoomControl: false,
+                attributionControl: false
+            }).setView([baseLat, baseLon], 12);
+            
+            // Add zoom control manually at top-right
+            L.control.zoom({ position: 'topright' }).addTo(leafletMap);
+            
+            // Use gorgeous CartoDB Dark Matter tiles (perfect dark cyber-slate vibe)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19
+            }).addTo(leafletMap);
+        }
+
+        // Toggle Business Input State based on checkbox
+        function toggleBusinessInput(isChecked) {
+            const label = document.getElementById('promptLabel');
+            const textarea = document.getElementById('userPrompt');
+            if (isChecked) {
+                label.innerText = "📍 Target Location Prompt";
+                textarea.placeholder = "e.g., Indiranagar, Bangalore or South Mumbai, Maharashtra (We will suggest 5 business ideas for this area!)";
+            } else {
+                label.innerText = "💡 Business & Location Prompt";
+                textarea.placeholder = "e.g., I want to start a premium bakery in Indiranagar, Bangalore";
+            }
+        }
+
+        // Toggle Verifiable Schema Frame
+        function toggleJsonPanel() {
+            const body = document.getElementById('jsonBody');
+            const caret = document.getElementById('jsonCaret');
+            if (body.classList.contains('h-0')) {
+                body.classList.remove('h-0');
+                body.classList.add('h-56');
+                caret.classList.add('rotate-90');
+            } else {
+                body.classList.remove('h-56');
+                body.classList.add('h-0');
+                caret.classList.remove('rotate-90');
+            }
+        }
+
+        // Async Loading Logs Simulator Loop
+        function runLoadingLogs(callback) {
+            const logs = [
+                { text: "[AGENT-INIT] Parsing natural language intent and spatial constraints...", progress: 20 },
+                { text: "[DEMOGRAPHIC-SCAN] Extracting demographic insights and local socio-economic indicators via Gemini RAG...", progress: 40 },
+                { text: "[FINANCIAL-MODEL] Formulating basic investment structures, expected profit, and ROI models...", progress: 65 },
+                { text: "[GEOSPATIAL-OPTIMIZE] Locating precise geographic coordinate nodes on the local street network...", progress: 85 },
+                { text: "[SCHEMA-RECONCILE] Packaging type-safe GeoInvestPortfolioResponse payload...", progress: 95 }
+            ];
+
+            const container = document.getElementById('loadingStatusText');
+            const bar = document.getElementById('progressBar');
+            container.innerHTML = "";
+            bar.style.width = "5%";
+
+            let idx = 0;
+            const timer = setInterval(() => {
+                if (idx < logs.length) {
+                    const log = logs[idx];
+                    const div = document.createElement('div');
+                    div.classList.add('text-sm', 'font-mono', 'text-techTeal', 'animate-pulse');
+                    div.innerText = log.text;
+                    container.appendChild(div);
+                    container.scrollTop = container.scrollHeight;
+                    bar.style.width = `${log.progress}%`;
+                    idx++;
+                } else {
+                    clearInterval(timer);
+                    callback();
+                }
+            }, 800);
+        }
+
+        // Primary Async Engine POST Client Loop
+        async function runPortfolioOptimizer() {
+            // Read strategy parameters
+            const userPrompt = document.getElementById('userPrompt').value;
+            const noBusinessIdea = document.getElementById('noBusinessIdea').checked;
+            const geminiApiKey = document.getElementById('geminiApiKey').value;
+
+            if (!userPrompt.trim()) {
+                alert("Please enter your business idea and target location details!");
+                return;
+            }
+            if (!geminiApiKey.trim()) {
+                alert("Please enter a valid Gemini API Key!");
+                return;
+            }
+
+            // Save key to local storage
+            localStorage.setItem('geoInvestGeminiKey', geminiApiKey);
+
+            // Update UI State -> Active Loading
+            const initial = document.getElementById('initialState');
+            const loading = document.getElementById('loadingState');
+            const activeDashboard = document.getElementById('activeDashboard');
+            const submitBtn = document.getElementById('submitBtn');
+
+            initial.classList.add('hidden');
+            loading.classList.remove('hidden');
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            
+            runLoadingLogs(async () => {
+                try {
+                    const response = await fetch('/api/v2/optimize-portfolio', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            user_prompt: userPrompt,
+                            no_business_idea: noBusinessIdea,
+                            gemini_api_key: geminiApiKey
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errData = await response.json();
+                        throw new Error(errData.detail || `API returned error status code: ${response.status}`);
+                    }
+
+                    const payload = await response.json();
+                    
+                    // Display Active Dashboard
+                    loading.classList.add('hidden');
+                    activeDashboard.classList.remove('opacity-0', 'pointer-events-none');
+                    activeDashboard.style.opacity = "1";
+                    activeDashboard.style.pointerEvents = "auto";
+
+                    // Re-render dashboard dynamic fields
+                    renderSuccessState(payload);
+                    
+                } catch (error) {
+                    console.error("Dashboard engine optimization failed: ", error);
+                    alert(`Location Intelligence optimization failed.\nDetails: ${error.message}`);
+                    
+                    // Reset loaders
+                    loading.classList.add('hidden');
+                    initial.classList.remove('hidden');
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                }
+            });
+        }
+
+        // Animate count-up metrics for high-fidelity interactive feel
+        function animateValue(id, start, end, duration, formatFn) {
+            if (start === end) return;
+            const range = end - start;
+            let current = start;
+            const increment = end > start ? 1 : -1;
+            const stepTime = Math.abs(Math.floor(duration / (range / 100000 || 50)));
+            const obj = document.getElementById(id);
+            
+            const timer = setInterval(() => {
+                current += range / 15;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    clearInterval(timer);
+                    obj.innerText = formatFn(end);
+                } else {
+                    obj.innerText = formatFn(current);
+                }
+            }, 30);
+        }
+
+        // Handle successful state rendering, drawing coordinates, plotting Leaflet map, and adding cards
+        function renderSuccessState(payload) {
+            // 1. Update Metrics Row with dynamic count ups and metadata values
+            const formattedTotal = new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                maximumFractionDigits: 0
+            });
+            
+            animateValue("metricCapEx", 0, payload.total_estimated_capex, 600, val => formattedTotal.format(val));
+            document.getElementById('metricTitle').innerText = payload.portfolio_name;
+            document.getElementById('metricQuadrant').innerText = payload.allocation_status;
+            
+            // Update verifiable schema block
+            document.getElementById('jsonOutput').innerText = JSON.stringify(payload, null, 4);
+
+            // Update store counter tag
+            const sites = payload.recommended_locations;
+            document.getElementById('storeCountTag').innerText = `${sites.length} Active Nodes`;
+
+            // 2. Clear old markers and redraw active geographic coordinates
+            mapMarkers.forEach(m => leafletMap.removeLayer(m));
+            mapMarkers = [];
+            if (polylineConnector) {
+                leafletMap.removeLayer(polylineConnector);
+            }
+
+            const latLons = [];
+            const floatingCoordsContainer = document.getElementById('floatingCoords');
+            floatingCoordsContainer.innerHTML = "";
+
+            const cardsContainer = document.getElementById('siteCardsContainer');
+            cardsContainer.innerHTML = "";
+
+            sites.forEach((site, idx) => {
+                const lat = site.latitude;
+                const lon = site.longitude;
+                latLons.push([lat, lon]);
+
+                // Create Pulsing Marker HTML
+                const pulseIcon = L.divIcon({
+                    html: `
+                        <div class="pulsing-marker">
+                            <div class="pulsing-ring"></div>
+                            <div class="pulsing-dot" style="background-color: ${idx === 0 ? '#14b8a6' : '#10b981'}; box-shadow: 0 0 12px ${idx === 0 ? '#14b8a6' : '#10b981'};"></div>
+                        </div>
+                    `,
+                    className: 'custom-leaflet-marker',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                // Add to Leaflet Map
+                const marker = L.marker([lat, lon], { icon: pulseIcon }).addTo(leafletMap);
+                marker.bindPopup(`
+                    <div class="p-2 flex flex-col gap-1 max-w-[200px]">
+                        <span class="text-xs font-bold text-techTeal uppercase">${site.business_name}</span>
+                        <div class="font-mono text-sm font-bold text-zinc-100 mt-1">ROI Score: ${site.roi_rating}/10.0</div>
+                        <div class="text-xs text-zinc-300">Min. Inv: ₹ ${formattedTotal.format(site.min_investment).replace('₹', '')}</div>
+                        <div class="text-xs text-zinc-300">Est. Profit: ₹ ${formattedTotal.format(site.expected_profit).replace('₹', '')} / mo</div>
+                        <div class="text-xs text-techEmerald font-bold">ROI: ${site.roi_percentage}%</div>
+                    </div>
+                `);
+                mapMarkers.push(marker);
+
+                // Add to floating coordinates panel
+                const coordTag = document.createElement('div');
+                coordTag.classList.add('flex', 'justify-between', 'gap-4', 'border-b', 'border-zinc-800/50', 'pb-1');
+                coordTag.innerHTML = `
+                    <span class="text-zinc-500 font-bold">NODE_0${idx+1}:</span>
+                    <span class="text-techTeal">${lat.toFixed(5)}, ${lon.toFixed(5)}</span>
+                `;
+                floatingCoordsContainer.appendChild(coordTag);
+
+                // 3. Render Scrollable site recommendation cards
+                const card = document.createElement('div');
+                card.classList.add('glass-panel', 'rounded-xl', 'p-4.5', 'flex', 'flex-col', 'gap-3', 'hover:border-zinc-700/80', 'transition-all', 'duration-300', 'hover:-translate-y-0.5');
+                
+                const formattedMinInv = formattedTotal.format(site.min_investment);
+                const formattedProfit = formattedTotal.format(site.expected_profit);
+
+                card.innerHTML = `
+                    <!-- Card Header -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-gradient-to-r from-techTeal to-techEmerald text-zinc-950 px-2.5 py-0.5 rounded font-bold font-display uppercase shadow-sm">
+                                Node 0${idx + 1}
+                            </span>
+                            <span class="text-xs font-mono text-zinc-500 font-bold truncate max-w-[120px]">${site.business_name}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-sm font-bold ${site.roi_rating >= 7.5 ? 'text-techEmerald' : 'text-techTeal'}">
+                            <i data-lucide="trending-up" class="h-4 w-4"></i>
+                            <span>Score: ${site.roi_rating}/10.0</span>
+                        </div>
+                    </div>
+
+                    <!-- Coordinates block -->
+                    <div class="font-mono text-xs text-zinc-400 bg-zinc-950/60 border border-zinc-900 px-3 py-2 rounded flex justify-between">
+                        <span>Lat: ${lat.toFixed(5)}</span>
+                        <span>Lon: ${lon.toFixed(5)}</span>
+                    </div>
+
+                    <!-- Details Grid -->
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="bg-zinc-900/30 border border-zinc-800/40 p-2 rounded-lg flex flex-col gap-0.5 overflow-hidden">
+                            <span class="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">Min Inv</span>
+                            <span class="text-xs font-mono font-bold text-zinc-300 truncate" title="${formattedMinInv}">${formattedMinInv}</span>
+                        </div>
+                        <div class="bg-zinc-900/30 border border-zinc-800/40 p-2 rounded-lg flex flex-col gap-0.5 overflow-hidden">
+                            <span class="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">Est Profit / mo</span>
+                            <span class="text-xs font-mono font-bold text-zinc-300 truncate" title="${formattedProfit} / mo">${formattedProfit} / mo</span>
+                        </div>
+                        <div class="bg-zinc-900/30 border border-zinc-800/40 p-2 rounded-lg flex flex-col gap-0.5 overflow-hidden">
+                            <span class="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">ROI %</span>
+                            <span class="text-xs font-mono font-bold text-techEmerald">${site.roi_percentage}%</span>
+                        </div>
+                    </div>
+
+                    <!-- Agent RAG Block -->
+                    <div class="flex flex-col gap-2">
+                        <span class="text-xs uppercase tracking-wider font-semibold text-zinc-500">Demographic & Feasibility Analysis</span>
+                        <div class="bg-zinc-950 border border-zinc-900/80 p-3 rounded-lg text-xs font-mono text-techTeal leading-relaxed bg-[#0c0c0e] border-l-2 border-l-techTeal">
+                            ${site.rag_context_summary}
+                        </div>
+                    </div>
+                `;
+                cardsContainer.appendChild(card);
+            });
+
+            // 4. Draw connecting lines between nodes if multiple locations are selected
+            if (latLons.length > 1) {
+                polylineConnector = L.polyline(latLons, {
+                    color: '#14b8a6',
+                    weight: 1.5,
+                    dashArray: '4, 6',
+                    opacity: 0.7
+                }).addTo(leafletMap);
+            }
+
+            // Pan and Zoom map smoothly around selected nodes
+            const group = new L.featureGroup(mapMarkers);
+            leafletMap.fitBounds(group.getBounds().pad(0.15), {
+                animate: true,
+                duration: 1.2
+            });
+
+            // Initialize dynamic icons inside the cards
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
