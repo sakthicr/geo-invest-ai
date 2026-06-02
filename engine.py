@@ -14,7 +14,10 @@ from typing import List, Dict, Any
 
 # Ensure async environments function flawlessly inside an interactive notebook
 import nest_asyncio
-nest_asyncio.apply()
+try:
+    nest_asyncio.apply()
+except Exception as e:
+    print(f"[Warning] Failed to apply nest_asyncio: {e}", file=sys.stderr)
 
 # ---------------------------------------------------------------------
 # STEP 1: DEFINE PRODUCTION-GRADE STRUCTURAL SCHEMAS (Pydantic v2)
